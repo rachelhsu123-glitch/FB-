@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FB 多功能貼文示意圖生成器</title>
+  <!-- 引入 html2canvas 與 FontAwesome 圖標庫 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #1c1e21;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+
+    .main-wrapper {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    /* 控制面板 */
+    .control-panel {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 380px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .control-panel h2 {
+      margin: 0;
+      font-size: 18px;
+      border-bottom: 2px solid #1877f2;
+      padding-bottom: 8px;
+      color: #1877f2;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-group label {
+      font-size: 13px;
+      font-weight: bold;
+      color: #333;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      background-color: #fff;
+    }
+    .form-group textarea {
+      resize: vertical;
+      height: 60px;
+    }
+    .btn-reset {
+      font-size: 12px;
+      color: #1877f2;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      margin-top: 2px;
+      text-decoration: underline;
+      text-align: left;
+    }
+    .btn-download {
+      background: #42b72a;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 10px;
+    }
+    .btn-download:hover {
+      background: #36a420;
+    }
+
+    /* 預覽區域共通樣式 */
+    .preview-container {
+      width: 500px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .fb-post {
+      padding: 12px 0 0 0;
+    }
+    .post-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px 12px 16px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: #e4e6eb;
+    }
+    .page-name-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .page-name {
+      font-weight: bold;
+      font-size: 15px;
+      color: #050505;
+      line-height: 1.2;
+    }
+    .verify-badge {
+      color: #1877f2;
+      font-size: 13px;
+    }
+    .post-time {
+      font-size: 13px;
+      color: #65676b;
+      margin-top: 2px;
+    }
+    .post-text {
+      padding: 0 16px 12px 16px;
+      font-size: 15px;
+      color: #050505;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+
+    /* --- 模式 1: 連結貼文專屬樣式 --- */
+    .fb-link-card {
+      border-top: 1px solid #e4e6eb;
+      background-color: #f0f2f5;
+    }
+    .fb-image-container {
+      width: 100%;
+      max-height: 300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .fb-image {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+      display: block;
+    }
+    .fb-link-info {
+      padding: 10px 12px;
+      background-color: #f0f2f5;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .fb-link-domain {
+      font-size: 12px;
+      color: #65676b;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .fb-link-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #050505;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* --- 模式 2: 黃框與留言專屬樣式 --- */
+    .main-image-box {
+      background-color: #fef078;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+    .main-image-text {
+      font-weight: 800;
+      font-size: 28px;
+      line-height: 1.4;
+      color: #574c1a;
+      white-space: pre-line;
+    }
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      border-bottom: 1px solid #e4e6eb;
+      font-size: 13px;
+      color: #65676b;
+    }
+    .reactions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .reaction-icons {
+      display: flex;
+    }
+    .reaction-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 10px;
+      border: 1px solid #fff;
+      margin-right: -4px;
+    }
+    .icon-like { background: #1877f2; }
+    .icon-angry { background: #f3425f; }
+    .icon-wow { background: #f7b125; }
+    .filter-bar {
+      padding: 8px 16px 0 16px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #65676b;
+    }
+    .comment-container {
+      padding: 8px 16px 16px 16px;
+    }
+    .comment-box {
+      display: flex;
+      gap: 8px;
+    }
+    .comment-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .comment-bubble {
+      background: #f0f2f5;
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 13px;
+      width: 100%;
+    }
+    .comment-user {
+      font-weight: bold;
+      color: #050505;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .author-badge {
+      font-size: 12px;
+      color: #65676b;
+      font-weight: normal;
+    }
+    .comment-text {
+      margin-top: 2px;
+      color: #050505;
+      word-break: break-word;
+    }
+    .comment-link {
+      color: #1877f2;
+      text-decoration: none;
+      word-break: break-all;
+      display: block;
+      margin-top: 4px;
+    }
+    .link-preview {
+      border: 1px solid #e4e6eb;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 8px;
+      display: flex;
+      background: #fff;
+      position: relative;
+    }
+    .link-img {
+      width: 130px;
+      height: 100px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .link-info {
+      padding: 8px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #f9f9f9;
+    }
+    .link-domain {
+      font-size: 11px;
+      color: #65676b;
+      text-transform: uppercase;
+    }
+    .link-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #050505;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    /* --- 模式 3: 影片貼文專屬樣式 --- */
+    .video-container {
+      position: relative;
+      width: 100%;
+      background-color: #000;
+      overflow: hidden;
+    }
+    .video-cover-img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .play-button-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+    .play-button-svg {
+      fill: #fff;
+      width: 72px;
+      height: 72px;
+      opacity: 0.9;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+    }
+
+    /* 底部互動按鈕區 */
+    .fb-footer {
+      padding: 8px 16px;
+      border-top: 1px solid #e4e6eb;
+      display: flex;
+      justify-content: space-around;
+      color: #65676b;
+      font-size: 14px;
+      font-weight: 600;
+      background: #fff;
+    }
+    .fb-footer-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>FB 綜合貼文示意圖產生器</h1>
+
+  <div class="main-wrapper">
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <h2>設定選項</h2>
+
+      <!-- 模式切換 -->
+      <div class="form-group">
+        <label for="modeSelect">選擇貼文類型</label>
+        <select id="modeSelect" onchange="switchMode(this.value)">
+          <option value="link">1. FB 連結貼文 (大圖+標題卡片)</option>
+          <option value="comment">2. FB 純文字 / 黃框+留言區</option>
+          <option value="video">3. FB 影片貼文 (播放鍵)</option>
+        </select>
+      </div>
+
+      <hr style="border:0; border-top: 1px solid #eee; margin: 4px 0;">
+
+      <!-- 粉專設定 -->
+      <div class="form-group">
+        <label for="selectPageName">選擇粉絲專頁</label>
+        <select id="selectPageName" onchange="onPageChange(this.value)">
+          <!-- 選項由 JS 自動繪製 -->
+        </select>
+      </div>
+
+      <div class="form-group" id="customNameGroup" style="display: none;">
+        <label for="inputCustomName">自訂粉專名稱</label>
+        <input type="text" id="inputCustomName" placeholder="請輸入自訂名稱" oninput="render()">
+      </div>
+
+      <div class="form-group">
+        <label for="inputAvatar">大頭貼 (可上傳覆蓋)</label>
+        <input type="file" id="inputAvatar" accept="image/*" onchange="handleAvatarUpload(event)">
+        <button class="btn-reset" onclick="resetAvatar()">恢復預設大頭貼</button>
+      </div>
+
+      <!-- 動態輸入欄位 -->
+      <div class="form-group mode-field mode-link mode-video">
+        <label for="inputPostText">貼文內文</label>
+        <textarea id="inputPostText" placeholder="在此輸入貼文文案..." oninput="render()">文案</textarea>
+      </div>
+
+      <div class="form-group mode-field mode-link mode-video">
+        <label id="lblMainImage" for="inputMainImage">貼文圖片 / 影片封面</label>
+        <input type="file" id="inputMainImage" accept="image/*" onchange="handleMainImageUpload(event)">
+      </div>
+
+      <div class="form-group mode-field mode-link">
+        <label for="inputDomain">網域 / 來源名稱 (Domain)</label>
+        <input type="text" id="inputDomain" value="ETTODAY.NET" oninput="render()">
+      </div>
+
+      <div class="form-group mode-field mode-comment" style="display: none;">
+        <label for="inputMainText">黃框主視覺文字</label>
+        <textarea id="inputMainText" oninput="render()">文案</textarea>
+      </div>
+
+      <div class="form-group mode-field mode-comment" style="display: none;">
+        <label for="inputCommentText">留言文案內容</label>
+        <input type="text" id="inputCommentText" value="留言文案" oninput="render()">
+      </div>
+
+      <div class="form-group mode-field mode-comment" style="display: none;">
+        <label for="inputNewsUrl">新聞網址</label>
+        <input type="text" id="inputNewsUrl" value="https://www.ettoday.net/news/20260724/3206995.htm" oninput="render()">
+      </div>
+
+      <div class="form-group mode-field mode-comment" style="display: none;">
+        <label for="inputCommentThumb">留言連結縮圖 (可上傳覆蓋)</label>
+        <input type="file" id="inputCommentThumb" accept="image/*" onchange="handleCommentThumbUpload(event)">
+      </div>
+
+      <div class="form-group mode-field mode-link mode-comment">
+        <label for="inputLinkTitle">連結 / 新聞標題</label>
+        <textarea id="inputLinkTitle" style="height: 50px;" oninput="render()">標題</textarea>
+      </div>
+
+      <button class="btn-download" onclick="downloadImage()">下載示意圖 (PNG)</button>
+    </div>
+
+    <!-- 預覽區域 -->
+    <div class="preview-container" id="captureArea">
+      <div class="fb-post">
+        
+        <!-- 頂部粉專標頭 -->
+        <div class="post-header">
+          <div class="user-info">
+            <img id="previewAvatar" class="avatar" src="" alt="大頭貼">
+            <div>
+              <div class="page-name-container">
+                <span id="previewPageName" class="page-name">ETtoday新聞雲</span>
+                <i class="fa-solid fa-circle-check verify-badge"></i>
+              </div>
+              <div class="post-time" id="previewTime">1 小時 · 🌐</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-ellipsis" style="color: #65676b; font-size: 18px;"></i>
+        </div>
+
+        <!-- 內文 (連結/影片模式) -->
+        <div id="viewPostText" class="post-text mode-field mode-link mode-video">文案</div>
+
+        <!-- 模式 1: 連結卡片區 -->
+        <div id="viewLinkCard" class="fb-link-card mode-field mode-link">
+          <div class="fb-image-container">
+            <img id="previewLinkImage" class="fb-image" src="https://via.placeholder.com/500x260/e4e6eb/8d949e?text=請上傳貼文圖片" alt="主圖">
+          </div>
+          <div class="fb-link-info">
+            <div id="previewDomain" class="fb-link-domain">ETTODAY.NET</div>
+            <div id="previewLinkTitle1" class="fb-link-title">標題</div>
+          </div>
+        </div>
+
+        <!-- 模式 2: 黃框大圖 + 留言區 -->
+        <div id="viewYellowBox" class="mode-field mode-comment" style="display: none;">
+          <div class="main-image-box">
+            <div id="viewMainText" class="main-image-text">文案</div>
+          </div>
+          <div class="stats-bar">
+            <div class="reactions">
+              <div class="reaction-icons">
+                <div class="reaction-icon icon-like"><i class="fa-solid fa-thumbs-up"></i></div>
+                <div class="reaction-icon icon-angry"><i class="fa-solid fa-face-angry"></i></div>
+                <div class="reaction-icon icon-wow"><i class="fa-solid fa-face-surprise"></i></div>
+              </div>
+              <span style="margin-left: 6px;">18</span>
+            </div>
+            <div>
+              <span>8</span> <i class="fa-regular fa-comment"></i> &nbsp;
+              <span>1</span> <i class="fa-solid fa-share"></i>
+            </div>
+          </div>
+          <div class="filter-bar">最相關 <i class="fa-solid fa-caret-down"></i></div>
+          <div class="comment-container">
+            <div class="comment-box">
+              <img id="previewCommentAvatar" class="comment-avatar" src="" alt="留言頭貼">
+              <div style="flex: 1;">
+                <div class="comment-bubble">
+                  <div class="comment-user">
+                    <span id="previewCommentPageName">ETtoday新聞雲</span>
+                    <i class="fa-solid fa-circle-check verify-badge"></i>
+                    <span class="author-badge">· 剛剛 · <i class="fa-solid fa-pen" style="font-size:10px;"></i> 作者</span>
+                  </div>
+                  <div id="viewCommentText" class="comment-text">留言文案</div>
+                  <a class="comment-link" href="#" onclick="return false;">
+                    <span id="viewUrlText">https://www.ettoday.net/...</span>
+                    <i class="fa-solid fa-circle-check" style="color:#059669; font-size:12px;"></i>
+                  </a>
+                  <div class="link-preview">
+                    <i class="fa-solid fa-circle-info" style="position:absolute; top:6px; right:8px; color:#65676b; font-size:12px;"></i>
+                    <img id="previewCommentLinkImg" class="link-img" src="https://via.placeholder.com/130x100/e2e8f0/475569?text=News" alt="縮圖">
+                    <div class="link-info">
+                      <div id="viewCommentDomain" class="link-domain">ETTODAY.NET</div>
+                      <div id="previewLinkTitle2" class="link-title">標題</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 模式 3: 影片專屬區塊 -->
+        <div id="viewVideoCard" class="mode-field mode-video" style="display: none;">
+          <div class="video-container">
+            <img id="previewVideoImage" class="video-cover-img" src="https://via.placeholder.com/500x300/333333/ffffff?text=請上傳影片封面" alt="影片封面">
+            <div class="play-button-overlay">
+              <svg class="play-button-svg" viewBox="0 0 140 140">
+                <g fill="none" fill-rule="evenodd">
+                  <circle fill="#FFF" opacity=".6" cx="70" cy="70" r="70"/>
+                  <path d="M50 40v60l50-30z" fill="#FFF"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部互動欄 -->
+        <div class="fb-footer">
+          <div class="fb-footer-btn"><i class="fa-regular fa-thumbs-up"></i> 讚</div>
+          <div class="fb-footer-btn"><i class="fa-regular fa-comment"></i> 留言</div>
+          <div class="fb-footer-btn"><i class="fa-solid fa-share"></i> 分享</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const authorList = [
+      "ETtoday新聞雲", "ETtoday星光雲", "ETtoday分享雲", "ETtoday旅遊雲", 
+      "ETtoday寵物雲", "ET Fashion", "即新聞", "ETtoday車雲", 
+      "分眾雲 FB 推文", "播吧", "ETtoday美女雲", "鍵盤大檸檬"
+    ];
+
+    // 動態繪製與高畫質呈現之向量 Base64 Avatar 字典
+    function createVectorAvatar(type) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 100;
+      canvas.height = 100;
+      const ctx = canvas.getContext('2d');
+
+      // 畫底圓 (透明底 or 白底)
+      ctx.clearRect(0, 0, 100, 100);
+
+      // 環形漸層或外框 (針對 ET 雲系列)
+      if (type !== 'fashion') {
+        // 藍色邊框
+        ctx.beginPath();
+        ctx.arc(50, 50, 46, 0, Math.PI * 2);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#0066ff';
+        ctx.stroke();
+
+        // 四色圓環
+        const colors = ['#f35d21', '#fbb03b', '#29abe2', '#223884'];
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.arc(50, 50, 36, (i * Math.PI / 2) + 0.1, ((i + 1) * Math.PI / 2) - 0.1);
+          ctx.lineWidth = 10;
+          ctx.strokeStyle = colors[i];
+          ctx.stroke();
+        }
+      }
+
+      // 核心圖示繪製
+      ctx.fillStyle = '#223884';
+      ctx.strokeStyle = '#223884';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (type === 'fashion') {
+        // ET Fashion 圓圈藍邊
+        ctx.beginPath();
+        ctx.arc(50, 50, 46, 0, Math.PI * 2);
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#0066ff';
+        ctx.stroke();
+
+        ctx.fillStyle = '#333333';
+        ctx.font = 'bold 22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ET', 50, 42);
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#888888';
+        ctx.fillText('FASHION', 50, 62);
+      } else if (type === 'share') {
+        // 分享雲節點
+        ctx.beginPath();
+        ctx.arc(38, 42, 5, 0, Math.PI*2);
+        ctx.arc(62, 38, 5, 0, Math.PI*2);
+        ctx.arc(50, 62, 5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(38, 42); ctx.lineTo(62, 38);
+        ctx.moveTo(38, 42); ctx.lineTo(50, 62);
+        ctx.moveTo(62, 38); ctx.lineTo(50, 62);
+        ctx.stroke();
+      } else if (type === 'news') {
+        // 即新聞 (Play鍵與文字感)
+        ctx.fillStyle = '#f35d21';
+        ctx.beginPath();
+        ctx.moveTo(42, 40);
+        ctx.lineTo(52, 48);
+        ctx.lineTo(42, 56);
+        ctx.fill();
+        ctx.fillStyle = '#223884';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('即', 58, 62);
+      } else if (type === 'star') {
+        // 星光雲 (星星)
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          ctx.lineTo(Math.cos((18 + i * 72) * Math.PI / 180) * 16 + 50, -Math.sin((18 + i * 72) * Math.PI / 180) * 16 + 50);
+          ctx.lineTo(Math.cos((54 + i * 72) * Math.PI / 180) * 8 + 50, -Math.sin((54 + i * 72) * Math.PI / 180) * 8 + 50);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else if (type === 'travel') {
+        // 旅遊雲 (飛機)
+        ctx.beginPath();
+        ctx.moveTo(32, 50);
+        ctx.lineTo(68, 38);
+        ctx.lineTo(58, 50);
+        ctx.lineTo(65, 62);
+        ctx.lineTo(52, 54);
+        ctx.lineTo(40, 60);
+        ctx.closePath();
+        ctx.fill();
+      } else if (type === 'pet') {
+        // 寵物雲 (鼻子與嘴巴)
+        ctx.beginPath();
+        ctx.arc(50, 46, 5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(43, 53, 6, 0, Math.PI);
+        ctx.arc(57, 53, 6, 0, Math.PI);
+        ctx.stroke();
+      } else {
+        // 新聞雲 (微笑嘴型)
+        ctx.beginPath();
+        ctx.arc(50, 46, 12, 0.2 * Math.PI, 0.8 * Math.PI);
+        ctx.lineWidth = 5;
+        ctx.stroke();
+      }
+
+      return canvas.toDataURL('image/png');
+    }
+
+    // 建立完整的內部高清 Base64 字典
+    const knownAvatars = {
+      "ET Fashion": createVectorAvatar('fashion'),
+      "ETtoday分享雲": createVectorAvatar('share'),
+      "即新聞": createVectorAvatar('news'),
+      "ETtoday星光雲": createVectorAvatar('star'),
+      "ETtoday旅遊雲": createVectorAvatar('travel'),
+      "ETtoday新聞雲": createVectorAvatar('main'),
+      "ETtoday寵物雲": createVectorAvatar('pet')
+    };
+
+    let uploadedAvatar = null;
+    let uploadedMainImg = null;
+    let uploadedCommentThumb = null;
+
+    function generateLetterAvatar(text) {
+      const char = (text || "粉").charAt(0).toUpperCase();
+      const canvas = document.createElement('canvas');
+      canvas.width = 100;
+      canvas.height = 100;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#1877f2';
+      ctx.beginPath();
+      ctx.arc(50, 50, 50, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 50px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(char, 50, 55);
+      return canvas.toDataURL('image/png');
+    }
+
+    // 初始化下拉選單
+    const selectPageName = document.getElementById('selectPageName');
+    authorList.forEach(name => {
+      let opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      selectPageName.appendChild(opt);
+    });
+    let customOpt = document.createElement('option');
+    customOpt.value = 'custom';
+    customOpt.textContent = '-- 自訂粉專名稱 --';
+    selectPageName.appendChild(customOpt);
+
+    function switchMode(mode) {
+      document.querySelectorAll('.mode-field').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.mode-' + mode).forEach(el => {
+        if (el.classList.contains('form-group')) {
+          el.style.display = 'flex';
+        } else {
+          el.style.display = 'block';
+        }
+      });
+
+      const previewTime = document.getElementById('previewTime');
+      if (mode === 'comment') {
+        previewTime.innerHTML = '剛剛 · <i class="fa-solid fa-earth-americas" style="font-size:11px;"></i>';
+      } else {
+        previewTime.innerHTML = '1 小時 · 🌐';
+      }
+
+      render();
+    }
+
+    function onPageChange(val) {
+      document.getElementById('customNameGroup').style.display = (val === 'custom') ? 'flex' : 'none';
+      render();
+    }
+
+    function handleAvatarUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          uploadedAvatar = evt.target.result;
+          render();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function resetAvatar() {
+      uploadedAvatar = null;
+      document.getElementById('inputAvatar').value = '';
+      render();
+    }
+
+    function handleMainImageUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          uploadedMainImg = evt.target.result;
+          render();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function handleCommentThumbUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          uploadedCommentThumb = evt.target.result;
+          render();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function render() {
+      const selVal = selectPageName.value;
+      let pageName = selVal === 'custom' ? (document.getElementById('inputCustomName').value || '自訂粉專名稱') : selVal;
+      
+      document.getElementById('previewPageName').innerText = pageName;
+      document.getElementById('previewCommentPageName').innerText = pageName;
+
+      // 取得對應頭貼 Base64
+      let avatarSrc = uploadedAvatar || knownAvatars[pageName] || generateLetterAvatar(pageName);
+      document.getElementById('previewAvatar').src = avatarSrc;
+      document.getElementById('previewCommentAvatar').src = avatarSrc;
+
+      const postText = document.getElementById('inputPostText').value;
+      document.getElementById('viewPostText').innerText = postText;
+      document.getElementById('viewMainText').innerText = document.getElementById('inputMainText').value;
+      document.getElementById('viewCommentText').innerText = document.getElementById('inputCommentText').value;
+
+      if (uploadedMainImg) {
+        document.getElementById('previewLinkImage').src = uploadedMainImg;
+        document.getElementById('previewVideoImage').src = uploadedMainImg;
+      }
+
+      if (uploadedCommentThumb) {
+        document.getElementById('previewCommentLinkImg').src = uploadedCommentThumb;
+      } else if (uploadedMainImg) {
+        document.getElementById('previewCommentLinkImg').src = uploadedMainImg;
+      } else {
+        document.getElementById('previewCommentLinkImg').src = 'https://via.placeholder.com/130x100/e2e8f0/475569?text=News';
+      }
+
+      const rawUrl = document.getElementById('inputNewsUrl').value.trim();
+      let displayUrl = rawUrl.length > 45 ? rawUrl.substring(0, 45) + '......' : rawUrl;
+      document.getElementById('viewUrlText').innerText = displayUrl;
+
+      let domain = document.getElementById('inputDomain').value || 'ETTODAY.NET';
+      if (document.getElementById('modeSelect').value === 'comment' && rawUrl) {
+        try {
+          const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl);
+          domain = parsed.hostname.toUpperCase();
+        } catch(e) {}
+      }
+      document.getElementById('previewDomain').innerText = domain;
+      document.getElementById('viewCommentDomain').innerText = domain;
+
+      const linkTitle = document.getElementById('inputLinkTitle').value;
+      document.getElementById('previewLinkTitle1').innerText = linkTitle;
+      document.getElementById('previewLinkTitle2').innerText = linkTitle;
+    }
+
+    function downloadImage() {
+      const target = document.getElementById('captureArea');
+      html2canvas(target, {
+        useCORS: true,
+        scale: 2
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `fb-post-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+
+    switchMode('link');
+  </script>
+</body>
+</html>

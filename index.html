@@ -346,19 +346,20 @@
       margin-top: 2px;
     }
 
-    /* --- 模式 3: 影片貼文專屬樣式 --- */
+    /* --- 模式 3: 影片貼文專屬樣式 (已解除固定 16:9 比例) --- */
     .video-container {
       position: relative;
       width: 100%;
-      aspect-ratio: 16 / 9;
       background-color: #000;
       overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .video-cover-img {
       width: 100%;
-      height: 100%;
+      height: auto;
       display: block;
-      object-fit: cover;
     }
     .play-button-overlay {
       position: absolute;
@@ -447,7 +448,7 @@
 
       <!-- 主圖上傳 (連結模式與影片模式) -->
       <div class="form-group mode-field mode-link mode-video">
-        <label id="lblMainImage" for="inputMainImage">貼文圖片 / 影片封面 (建議 1200x628)</label>
+        <label id="lblMainImage" for="inputMainImage">貼文圖片 / 影片封面</label>
         <input type="file" id="inputMainImage" accept="image/*" onchange="handleMainImageUpload(event)">
       </div>
 

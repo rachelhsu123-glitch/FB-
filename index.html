@@ -174,6 +174,10 @@
       word-break: break-word;
       line-height: 1.4;
     }
+    /* Hashtag 藍色樣式 */
+    .hashtag {
+      color: #2e81f4;
+    }
 
     /* --- 模式 1: 一般推文 (連結貼文) --- */
     .fb-link-card {
@@ -509,7 +513,7 @@
       <!-- 貼文內文 -->
       <div class="form-group mode-field mode-link mode-video mode-multi">
         <label for="inputPostText">貼文內文</label>
-        <textarea id="inputPostText" placeholder="在此輸入貼文文案..." oninput="render()">文案</textarea>
+        <textarea id="inputPostText" placeholder="在此輸入貼文文案..." oninput="render()">【#蘭香如故】奪2026年冠軍！#譚松韻 甜美圓房 #劉學義 ...爆笑幕後曝光</textarea>
       </div>
 
       <!-- 單一主圖上傳 (一般推文與影音推文) -->
@@ -842,6 +846,13 @@
       }
     }
 
+    // 將文字中的 #hashtag 轉換為帶藍色樣式的 HTML
+    function formatHashtags(text) {
+      // 避免 XSS，先做基本的跳脫，再將 #字號 開頭的連續非空白字元加上 span 標籤
+      const safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      return safeText.replace(/(#[^\s#]+)/g, '<span class="hashtag">$1</span>');
+    }
+
     // 全局渲染更新
     function render() {
       const selVal = selectPageName.value;
@@ -856,9 +867,9 @@
       document.getElementById('previewAvatar').src = avatarSrc;
       document.getElementById('previewCommentAvatar').src = avatarSrc;
 
-      // 更新貼文/黃框/留言內容
+      // 更新貼文/黃框/留言內容 (貼文內容改用 innerHTML 支援 hashtag 藍字)
       const postText = document.getElementById('inputPostText').value;
-      document.getElementById('viewPostText').innerText = postText;
+      document.getElementById('viewPostText').innerHTML = formatHashtags(postText);
       document.getElementById('viewMainText').innerText = document.getElementById('inputMainText').value;
       document.getElementById('viewCommentText').innerText = document.getElementById('inputCommentText').value;
 

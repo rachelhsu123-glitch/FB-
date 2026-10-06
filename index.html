@@ -150,12 +150,21 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      flex-wrap: wrap;
     }
     .page-name {
       font-weight: bold;
       font-size: 15px;
       color: #050505;
       line-height: 1.2;
+    }
+    .partner-handshake {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: bold;
+      font-size: 15px;
+      color: #050505;
     }
     .verify-badge {
       color: #1877f2;
@@ -509,12 +518,23 @@
         <button class="btn-reset" onclick="resetAvatar()">恢復預設大頭貼</button>
       </div>
 
+      <!-- 與客戶握手設定 (支援一般、影音、客供圖文模式) -->
+      <div class="form-group mode-field mode-link mode-video mode-multi">
+        <label for="inputPartnerUrl">與客戶握手 (協作品牌 FB 連結)</label>
+        <input type="text" id="inputPartnerUrl" placeholder="https://www.facebook.com/..." oninput="handlePartnerUrlInput(this.value)">
+      </div>
+
+      <div class="form-group mode-field mode-link mode-video mode-multi">
+        <label for="inputPartnerName">手動輸入客戶名稱 (或由上方連結自動抓取)</label>
+        <input type="text" id="inputPartnerName" placeholder="例如：Haagen-Dazs" oninput="render()">
+      </div>
+
       <!-- 動態輸入欄位 (依模式切換顯示) -->
 
       <!-- 貼文內文 -->
       <div class="form-group mode-field mode-link mode-video mode-multi">
         <label for="inputPostText">貼文內文</label>
-        <textarea id="inputPostText" placeholder="在此輸入貼文文案..." oninput="render()"></textarea>
+        <textarea id="inputPostText" placeholder="" oninput="render()"></textarea>
       </div>
 
       <!-- 單一主圖上傳 (一般推文與影音推文) -->
@@ -539,13 +559,13 @@
       <!-- 黃框主視覺文字 (純文字帶連結模式) -->
       <div class="form-group mode-field mode-comment" style="display: none;">
         <label for="inputMainText">黃框主視覺文字</label>
-        <textarea id="inputMainText" placeholder="請輸入黃框內文..." oninput="render()"></textarea>
+        <textarea id="inputMainText" placeholder="" oninput="render()"></textarea>
       </div>
 
       <!-- 留言內容 (純文字帶連結模式) -->
       <div class="form-group mode-field mode-comment" style="display: none;">
         <label for="inputCommentText">留言文案內容</label>
-        <input type="text" id="inputCommentText" placeholder="請輸入留言文案..." oninput="render()">
+        <input type="text" id="inputCommentText" placeholder="" oninput="render()">
       </div>
 
       <!-- 新聞網址 (純文字帶連結模式) -->
@@ -563,7 +583,7 @@
       <!-- 連結卡片標題 (一般推文 & 純文字帶連結) -->
       <div class="form-group mode-field mode-link mode-comment">
         <label for="inputLinkTitle">連結 / 新聞標題</label>
-        <textarea id="inputLinkTitle" placeholder="請輸入標題..." style="height: 50px;" oninput="render()"></textarea>
+        <textarea id="inputLinkTitle" placeholder="" style="height: 50px;" oninput="render()"></textarea>
       </div>
 
       <button class="btn-download" onclick="downloadImage()">下載示意圖 (PNG)</button>
@@ -580,9 +600,12 @@
             <div>
               <div class="page-name-container">
                 <span id="previewPageName" class="page-name">ETtoday新聞雲</span>
+                <span id="viewPartnerHandshake" class="partner-handshake" style="display: none;">
+                  和 <span id="previewPartnerName"></span>
+                </span>
                 <i class="fa-solid fa-circle-check verify-badge"></i>
               </div>
-              <div class="post-time" id="previewTime">1 小時 · 🌐</div>
+              <div class="post-time" id="previewTime">剛剛 · <i class="fa-solid fa-earth-americas" style="font-size:11px;"></i></div>
             </div>
           </div>
           <i class="fa-solid fa-ellipsis" style="color: #65676b; font-size: 18px;"></i>
@@ -738,19 +761,41 @@
         }
       });
 
-      // 調整時間文字邏輯
-      const previewTime = document.getElementById('previewTime');
-      if (mode === 'comment') {
-        previewTime.innerHTML = '剛剛 · <i class="fa-solid fa-earth-americas" style="font-size:11px;"></i>';
-      } else {
-        previewTime.innerHTML = '1 小時 · 🌐';
-      }
-
       render();
     }
 
     function onPageChange(val) {
       document.getElementById('customNameGroup').style.display = (val === 'custom') ? 'flex' : 'none';
+      render();
+    }
+
+    // 自動從 FB 連結中擷取名稱 (修正版：支援各種網址結構與結尾斜線)
+    function handlePartnerUrlInput(url) {
+      let cleanUrl = url.trim();
+      if (cleanUrl) {
+        try {
+          // 移除開頭或結尾可能的空白及多餘斜線
+          cleanUrl = cleanUrl.replace(/\/+$/, "");
+          const urlObj = new URL(cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl);
+          const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+          
+          if (pathSegments.length > 0) {
+            // 通常最後一段為粉專名稱或 ID (例如 facebook.com/HaagenDazsTW -> HaagenDazsTW)
+            let candidate = pathSegments[pathSegments.length - 1];
+            // 若網址最後一段剛好是 pages 等分類，取前一段
+            if ((candidate === 'profile.php' || candidate === 'pages') && pathSegments.length > 1) {
+              candidate = pathSegments[pathSegments.length - 2];
+            }
+            document.getElementById('inputPartnerName').value = decodeURIComponent(candidate);
+          }
+        } catch(e) {
+          // 簡易備用正規解析
+          let match = cleanUrl.match(/facebook\.com\/([^\/?#]+)/);
+          if (match && match[1]) {
+            document.getElementById('inputPartnerName').value = decodeURIComponent(match[1]);
+          }
+        }
+      }
       render();
     }
 
@@ -861,6 +906,16 @@
       // 更新名稱
       document.getElementById('previewPageName').innerText = pageName;
       document.getElementById('previewCommentPageName').innerText = pageName;
+
+      // 更新合作夥伴（握手）名稱
+      const partnerName = document.getElementById('inputPartnerName').value.trim();
+      const handshakeContainer = document.getElementById('viewPartnerHandshake');
+      if (partnerName) {
+        document.getElementById('previewPartnerName').innerText = partnerName;
+        handshakeContainer.style.display = 'inline-flex';
+      } else {
+        handshakeContainer.style.display = 'none';
+      }
 
       // 更新頭貼
       let avatarSrc = uploadedAvatar || knownAvatars[pageName] || generateLetterAvatar(pageName);

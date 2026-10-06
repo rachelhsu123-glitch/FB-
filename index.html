@@ -173,6 +173,7 @@
       white-space: pre-wrap;
       word-break: break-word;
       line-height: 1.4;
+      min-height: 10px;
     }
     /* Hashtag 藍色樣式 */
     .hashtag {
@@ -219,6 +220,7 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      min-height: 20px;
     }
 
     /* --- 模式 2: 純文字帶連結 (黃框+留言區) --- */
@@ -239,6 +241,7 @@
       line-height: 1.4;
       color: #574c1a;
       white-space: pre-line;
+      min-height: 30px;
     }
     .stats-bar {
       display: flex;
@@ -314,6 +317,7 @@
       margin-top: 2px;
       color: #050505;
       word-break: break-word;
+      min-height: 15px;
     }
     .comment-link {
       color: #1877f2;
@@ -359,6 +363,7 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       margin-top: 2px;
+      min-height: 18px;
     }
 
     /* --- 模式 3: 影音推文 --- */
@@ -421,15 +426,11 @@
       display: block;
     }
 
-    /* 多圖網格版型 */
-    .layout-single { 
-      grid-template-columns: 1fr; 
-    }
+    .layout-single { grid-template-columns: 1fr; }
     .layout-single .gallery-item img {
-      height: auto; /* 單張圖片時呈顯原尺寸/原長寬比 */
+      height: auto;
       object-fit: contain;
     }
-
     .layout-2 { grid-template-columns: 1fr 1fr; aspect-ratio: 600 / 315; }
     .layout-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 240px 180px; }
     .layout-3 .gallery-item:nth-child(1) { grid-column: span 2; }
@@ -513,7 +514,7 @@
       <!-- 貼文內文 -->
       <div class="form-group mode-field mode-link mode-video mode-multi">
         <label for="inputPostText">貼文內文</label>
-        <textarea id="inputPostText" placeholder="在此輸入貼文文案..." oninput="render()">【#蘭香如故】奪2026年冠軍！#譚松韻 甜美圓房 #劉學義 ...爆笑幕後曝光</textarea>
+        <textarea id="inputPostText" placeholder="在此輸入貼文文案..." oninput="render()"></textarea>
       </div>
 
       <!-- 單一主圖上傳 (一般推文與影音推文) -->
@@ -532,25 +533,25 @@
       <!-- 網域 (一般推文) -->
       <div class="form-group mode-field mode-link">
         <label for="inputDomain">網域 / 來源名稱 (Domain)</label>
-        <input type="text" id="inputDomain" value="ETTODAY.NET" oninput="render()">
+        <input type="text" id="inputDomain" placeholder="例如：ETTODAY.NET" oninput="render()">
       </div>
 
       <!-- 黃框主視覺文字 (純文字帶連結模式) -->
       <div class="form-group mode-field mode-comment" style="display: none;">
         <label for="inputMainText">黃框主視覺文字</label>
-        <textarea id="inputMainText" oninput="render()">文案</textarea>
+        <textarea id="inputMainText" placeholder="請輸入黃框內文..." oninput="render()"></textarea>
       </div>
 
       <!-- 留言內容 (純文字帶連結模式) -->
       <div class="form-group mode-field mode-comment" style="display: none;">
         <label for="inputCommentText">留言文案內容</label>
-        <input type="text" id="inputCommentText" value="留言文案" oninput="render()">
+        <input type="text" id="inputCommentText" placeholder="請輸入留言文案..." oninput="render()">
       </div>
 
       <!-- 新聞網址 (純文字帶連結模式) -->
       <div class="form-group mode-field mode-comment" style="display: none;">
         <label for="inputNewsUrl">新聞網址</label>
-        <input type="text" id="inputNewsUrl" value="https://www.ettoday.net/news/20260724/3206995.htm" oninput="render()">
+        <input type="text" id="inputNewsUrl" placeholder="https://..." oninput="render()">
       </div>
 
       <!-- 留言卡片小圖 (純文字帶連結模式專用) -->
@@ -562,7 +563,7 @@
       <!-- 連結卡片標題 (一般推文 & 純文字帶連結) -->
       <div class="form-group mode-field mode-link mode-comment">
         <label for="inputLinkTitle">連結 / 新聞標題</label>
-        <textarea id="inputLinkTitle" style="height: 50px;" oninput="render()">標題</textarea>
+        <textarea id="inputLinkTitle" placeholder="請輸入標題..." style="height: 50px;" oninput="render()"></textarea>
       </div>
 
       <button class="btn-download" onclick="downloadImage()">下載示意圖 (PNG)</button>
@@ -588,7 +589,7 @@
         </div>
 
         <!-- 內文 -->
-        <div id="viewPostText" class="post-text mode-field mode-link mode-video mode-multi">文案</div>
+        <div id="viewPostText" class="post-text mode-field mode-link mode-video mode-multi"></div>
 
         <!-- 模式 1: 一般推文 (連結卡片區) -->
         <div id="viewLinkCard" class="fb-link-card mode-field mode-link">
@@ -596,15 +597,15 @@
             <img id="previewLinkImage" class="fb-image" src="https://via.placeholder.com/600x315/e4e6eb/8d949e?text=請上傳貼文圖片" alt="主圖">
           </div>
           <div class="fb-link-info">
-            <div id="previewDomain" class="fb-link-domain">ETTODAY.NET</div>
-            <div id="previewLinkTitle1" class="fb-link-title">標題</div>
+            <div id="previewDomain" class="fb-link-domain"></div>
+            <div id="previewLinkTitle1" class="fb-link-title"></div>
           </div>
         </div>
 
         <!-- 模式 2: 純文字帶連結 (黃框大圖 + 留言區) -->
         <div id="viewYellowBox" class="mode-field mode-comment" style="display: none;">
           <div class="main-image-box">
-            <div id="viewMainText" class="main-image-text">文案</div>
+            <div id="viewMainText" class="main-image-text"></div>
           </div>
           <div class="stats-bar">
             <div class="reactions">
@@ -631,17 +632,17 @@
                     <i class="fa-solid fa-circle-check verify-badge"></i>
                     <span class="author-badge">· 剛剛 · <i class="fa-solid fa-pen" style="font-size:10px;"></i> 作者</span>
                   </div>
-                  <div id="viewCommentText" class="comment-text">留言文案</div>
+                  <div id="viewCommentText" class="comment-text"></div>
                   <a class="comment-link" href="#" onclick="return false;">
-                    <span id="viewUrlText">https://www.ettoday.net/...</span>
+                    <span id="viewUrlText"></span>
                     <i class="fa-solid fa-circle-check" style="color:#059669; font-size:12px;"></i>
                   </a>
                   <div class="link-preview">
                     <i class="fa-solid fa-circle-info" style="position:absolute; top:6px; right:8px; color:#65676b; font-size:12px;"></i>
                     <img id="previewCommentLinkImg" class="link-img" src="https://via.placeholder.com/130x100/e2e8f0/475569?text=News" alt="縮圖">
                     <div class="link-info">
-                      <div id="viewCommentDomain" class="link-domain">ETTODAY.NET</div>
-                      <div id="previewLinkTitle2" class="link-title">標題</div>
+                      <div id="viewCommentDomain" class="link-domain"></div>
+                      <div id="previewLinkTitle2" class="link-title"></div>
                     </div>
                   </div>
                 </div>
@@ -848,7 +849,6 @@
 
     // 將文字中的 #hashtag 轉換為帶藍色樣式的 HTML
     function formatHashtags(text) {
-      // 避免 XSS，先做基本的跳脫，再將 #字號 開頭的連續非空白字元加上 span 標籤
       const safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       return safeText.replace(/(#[^\s#]+)/g, '<span class="hashtag">$1</span>');
     }
@@ -867,7 +867,7 @@
       document.getElementById('previewAvatar').src = avatarSrc;
       document.getElementById('previewCommentAvatar').src = avatarSrc;
 
-      // 更新貼文/黃框/留言內容 (貼文內容改用 innerHTML 支援 hashtag 藍字)
+      // 更新貼文/黃框/留言內容
       const postText = document.getElementById('inputPostText').value;
       document.getElementById('viewPostText').innerHTML = formatHashtags(postText);
       document.getElementById('viewMainText').innerText = document.getElementById('inputMainText').value;
@@ -896,8 +896,8 @@
       let displayUrl = rawUrl.length > 45 ? rawUrl.substring(0, 45) + '......' : rawUrl;
       document.getElementById('viewUrlText').innerText = displayUrl;
 
-      let domain = document.getElementById('inputDomain').value || 'ETTODAY.NET';
-      if (document.getElementById('modeSelect').value === 'comment' && rawUrl) {
+      let domain = document.getElementById('inputDomain').value;
+      if (!domain && document.getElementById('modeSelect').value === 'comment' && rawUrl) {
         try {
           const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl);
           domain = parsed.hostname.toUpperCase();
